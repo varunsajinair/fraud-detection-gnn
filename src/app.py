@@ -5,25 +5,27 @@ import pickle
 import snowflake.connector
 from datetime import datetime
 import uuid
+import os
 
 app = FastAPI(title="FraudShield API", version="2.0")
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 print("Loading models...")
-with open(r'C:\Users\varun\Desktop\fraud-gnn\models\fraud_classifier.pkl', 'rb') as f:
+with open(os.path.join(BASE_DIR, 'models', 'fraud_classifier.pkl'), 'rb') as f:
     classifier = pickle.load(f)
-with open(r'C:\Users\varun\Desktop\fraud-gnn\models\scaler.pkl', 'rb') as f:
+with open(os.path.join(BASE_DIR, 'models', 'scaler.pkl'), 'rb') as f:
     scaler = pickle.load(f)
-with open(r'C:\Users\varun\Desktop\fraud-gnn\models\feature_cols.pkl', 'rb') as f:
+with open(os.path.join(BASE_DIR, 'models', 'feature_cols.pkl'), 'rb') as f:
     feature_cols = pickle.load(f)
 
 print(f"✅ Models loaded! Features: {len(feature_cols)}")
 
-# Snowflake connection
 def get_snowflake_conn():
     return snowflake.connector.connect(
-        user='Varun',
-        password='Darsait@aw6334',
-        account='sxkobdu-fw40635',
+        user=os.getenv('SNOWFLAKE_USER'),
+        password=os.getenv('SNOWFLAKE_PASSWORD'),
+        account=os.getenv('SNOWFLAKE_ACCOUNT', 'sxkobdu-fw40635'),
         warehouse='COMPUTE_WH',
         database='FRAUDSHIELD',
         schema='FRAUD_DETECTION'
@@ -113,7 +115,6 @@ def predict(transaction: Transaction):
     
     prediction_id = str(uuid.uuid4())[:8]
     
-    # Log to Snowflake
     log_to_snowflake(
         prediction_id,
         transaction.TransactionAmt,
