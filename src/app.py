@@ -1,101 +1,81 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-import torch
-import torch.nn.functional as F
-from torch_geometric.nn import SAGEConv
-import torch.nn as nn
 import numpy as np
+import pickle
 
-app = FastAPI(title="Fraud Detection GNN API", version="1.0")
+app = FastAPI(title="FraudShield API", version="2.0")
 
-# Define model architecture
-class FraudGNN(nn.Module):
-    def __init__(self, in_channels, hidden_channels, out_channels):
-        super(FraudGNN, self).__init__()
-        self.conv1 = SAGEConv(in_channels, hidden_channels)
-        self.conv2 = SAGEConv(hidden_channels, hidden_channels)
-        self.classifier = nn.Linear(hidden_channels, out_channels)
-        self.dropout = nn.Dropout(p=0.5)
-        
-    def forward(self, x, edge_index):
-        x = self.conv1(x, edge_index)
-        x = F.relu(x)
-        x = self.dropout(x)
-        x = self.conv2(x, edge_index)
-        x = F.relu(x)
-        x = self.dropout(x)
-        x = self.classifier(x)
-        return x
+print("Loading models...")
+with open(r'C:\Users\varun\Desktop\fraud-gnn\models\fraud_classifier.pkl', 'rb') as f:
+    classifier = pickle.load(f)
+with open(r'C:\Users\varun\Desktop\fraud-gnn\models\scaler.pkl', 'rb') as f:
+    scaler = pickle.load(f)
+with open(r'C:\Users\varun\Desktop\fraud-gnn\models\feature_cols.pkl', 'rb') as f:
+    feature_cols = pickle.load(f)
 
-# Load model and graph at startup
-print("Loading model and graph...")
-data = torch.load(
-    r'C:\Users\varun\Desktop\fraud-gnn\data\graph_data.pt',
-    map_location=torch.device('cpu'),
-    weights_only=False
-)
-model = FraudGNN(in_channels=11, hidden_channels=64, out_channels=2)
-model.load_state_dict(torch.load(
-    r'C:\Users\varun\Desktop\fraud-gnn\models\fraud_gnn_model.pt',
-    map_location=torch.device('cpu'),
-    weights_only=False
-))
-model.eval()
-print("✅ Model loaded!")
+print(f"✅ Models loaded! Features: {len(feature_cols)}")
 
-# Input schema
 class Transaction(BaseModel):
     TransactionAmt: float
-    C1: float
-    C2: float
-    C3: float
-    C4: float
-    C5: float
-    V1: float
-    V2: float
-    V3: float
-    V4: float
-    V5: float
+    C1: float = 1.0
+    C2: float = 1.0
+    C3: float = 0.0
+    C4: float = 0.0
+    C5: float = 0.0
+    C6: float = 1.0
+    C7: float = 0.0
+    C8: float = 0.0
+    C9: float = 1.0
+    C10: float = 0.0
+    V1: float = 1.0
+    V2: float = 1.0
+    V3: float = 1.0
+    V4: float = 1.0
+    V5: float = 1.0
+    V6: float = 1.0
+    V7: float = 1.0
+    V8: float = 1.0
+    V9: float = 1.0
+    V10: float = 1.0
+    V11: float = 1.0
+    V12: float = 1.0
+    V13: float = 1.0
+    V14: float = 1.0
+    V15: float = 1.0
+    V16: float = 1.0
+    V17: float = 1.0
+    V18: float = 1.0
+    V19: float = 1.0
+    V20: float = 1.0
 
 @app.get("/")
 def home():
-    return {"message": "Fraud Detection GNN API is running!"}
+    return {"message": "FraudShield API is running!"}
 
 @app.post("/predict")
 def predict(transaction: Transaction):
-    # Create feature vector
-    features = torch.tensor([[
+    features = np.array([[
         transaction.TransactionAmt,
         transaction.C1, transaction.C2, transaction.C3,
-        transaction.C4, transaction.C5,
-        transaction.V1, transaction.V2, transaction.V3,
-        transaction.V4, transaction.V5
-    ]], dtype=torch.float)
+        transaction.C4, transaction.C5, transaction.C6,
+        transaction.C7, transaction.C8, transaction.C9, transaction.C10,
+        transaction.V1, transaction.V2, transaction.V3, transaction.V4,
+        transaction.V5, transaction.V6, transaction.V7, transaction.V8,
+        transaction.V9, transaction.V10, transaction.V11, transaction.V12,
+        transaction.V13, transaction.V14, transaction.V15, transaction.V16,
+        transaction.V17, transaction.V18, transaction.V19, transaction.V20
+    ]])
     
-    # Use first node's edge connections
-    edge_index = data.edge_index[:, :10]
-    
-    # Pad features to match graph size
-    full_features = data.x.clone()
-    full_features[0] = features[0]
-    
-    with torch.no_grad():
-        out = model(full_features, data.edge_index)
-        probs = torch.softmax(out, dim=1)
-        fraud_prob = probs[0, 1].item()
-        prediction = "FRAUD" if fraud_prob > 0.5 else "LEGITIMATE"
+    scaled = scaler.transform(features)
+    fraud_prob = classifier.predict_proba(scaled)[0][1]
+    prediction = "FRAUD" if fraud_prob > 0.5 else "LEGITIMATE"
     
     return {
         "prediction": prediction,
-        "fraud_probability": round(fraud_prob, 4),
-        "legitimate_probability": round(1 - fraud_prob, 4),
-        "top_fraud_signals": {
-            "C2_address_count": transaction.C2,
-            "C4_phone_count": transaction.C4,
-            "TransactionAmt": transaction.TransactionAmt
-        }
+        "fraud_probability": round(float(fraud_prob), 4),
+        "legitimate_probability": round(float(1 - fraud_prob), 4)
     }
 
 @app.get("/health")
 def health():
-    return {"status": "healthy", "model": "FraudGNN", "version": "1.0"}
+    return {"status": "healthy", "model": "RandomForest", "features": len(feature_cols)}
