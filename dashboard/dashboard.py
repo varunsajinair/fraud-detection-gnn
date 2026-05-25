@@ -242,7 +242,7 @@ with right:
         }
         
         try:
-            response = requests.post("http://127.0.0.1:8000/predict", json=payload)
+            response = requests.post("https://fraud-detection-gnn-production.up.railway.app/predict", json=payload)
             result = response.json()
             response_time = (time.time() - start_time) * 1000
             
