@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+scikit-learn
+numpy
+pandas
+snowflake-connector-python
+torch==2.6.0
+torch-geometric
+imbalanced-learn
+pydantic
+python-dotenv
