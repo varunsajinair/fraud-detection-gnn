@@ -5,6 +5,10 @@ import pandas as pd
 import numpy as np
 import time
 from datetime import datetime
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from src.report_generator import generate_fraud_report
 
 st.set_page_config(
     page_title="FraudShield — AI Fraud Detection",
@@ -83,6 +87,17 @@ st.markdown("""
         box-shadow: 0 0 20px rgba(37, 99, 235, 0.5) !important;
     }
     
+    .stDownloadButton > button {
+        background: linear-gradient(135deg, #064e3b, #059669) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 10px !important;
+        padding: 12px !important;
+        font-size: 15px !important;
+        font-weight: 600 !important;
+        width: 100% !important;
+    }
+    
     .section-header {
         color: #94a3b8;
         font-size: 11px;
@@ -96,10 +111,8 @@ st.markdown("""
     hr { border-color: #1e3a5f !important; }
     p, label, .stMarkdown { color: #cbd5e1 !important; }
     h1, h2, h3 { color: white !important; }
-    
     div[data-testid="stMetricValue"] { color: white !important; }
     div[data-testid="stMetricLabel"] { color: #94a3b8 !important; }
-    
     .stDataFrame { background: #0d1b2e !important; }
     thead tr th { background: #1e3a5f !important; color: white !important; }
     tbody tr td { background: #0d1b2e !important; color: #cbd5e1 !important; }
@@ -242,7 +255,10 @@ with right:
         }
         
         try:
-            response = requests.post("https://fraud-detection-gnn-production.up.railway.app/predict", json=payload)
+            response = requests.post(
+                "https://fraud-detection-gnn-production.up.railway.app/predict",
+                json=payload
+            )
             result = response.json()
             response_time = (time.time() - start_time) * 1000
             
@@ -395,7 +411,27 @@ with right:
                 margin=dict(t=40, b=0, l=10, r=60)
             )
             st.plotly_chart(fig_bar, use_container_width=True)
-            
+
+            # PDF Download
+            st.divider()
+            report_data = {
+                'prediction_id': result.get('prediction_id', 'N/A'),
+                'prediction': prediction,
+                'fraud_probability': fraud_prob,
+                'alert_level': alert,
+                'TransactionAmt': amount,
+                'C1': C1, 'C2': C2, 'C4': C4, 'C5': C5
+            }
+            pdf_bytes = generate_fraud_report(report_data)
+            st.download_button(
+                label="📥 Download Compliance Report (PDF)",
+                data=pdf_bytes,
+                file_name=f"fraudshield_report_{result.get('prediction_id', 'report')}.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
+
+            st.divider()
             if prediction == "FRAUD":
                 st.markdown(f"""
                 <div style="background:#450a0a; border:1px solid #ef4444;
