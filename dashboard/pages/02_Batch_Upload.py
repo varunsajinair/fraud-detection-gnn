@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
+import time
 import io
 from datetime import datetime
 
@@ -38,7 +39,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Header
 st.markdown("""
 <div style="background:linear-gradient(135deg,#0d1b2e,#1a2744);border-radius:16px;
      padding:24px 32px;margin-bottom:24px;border:1px solid #1e3a5f;">
@@ -49,7 +49,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Instructions
 col1, col2 = st.columns([1.5, 1])
 
 with col1:
@@ -62,15 +61,14 @@ with col1:
     5. Download results with fraud predictions
     """)
 
-    # Sample CSV
     sample_data = pd.DataFrame({
-    'TransactionAmt': [150.0, 50.0, 2000.0, 75.0, 500.0, 37.0, 890.0, 120.0, 4500.0, 200.0],
-    'C1': [1, 6, 3, 1, 2, 0, 5, 1, 8, 1],
-    'C2': [1, 2, 5, 1, 3, 1, 7, 2, 9, 1],
-    'C4': [0, 1, 2, 0, 0, 1, 3, 0, 4, 0],
-    'C5': [0, 0, 1, 0, 0, 0, 2, 0, 3, 0]
-})
-    
+        'TransactionAmt': [150.0, 50.0, 2000.0, 75.0, 500.0, 37.0, 890.0, 120.0, 4500.0, 200.0],
+        'C1': [1, 6, 3, 1, 2, 0, 5, 1, 8, 1],
+        'C2': [1, 2, 5, 1, 3, 1, 7, 2, 9, 1],
+        'C4': [0, 1, 2, 0, 0, 1, 3, 0, 4, 0],
+        'C5': [0, 0, 1, 0, 0, 0, 2, 0, 3, 0]
+    })
+
     st.download_button(
         label="📥 Download Sample CSV Template",
         data=sample_data.to_csv(index=False),
@@ -96,7 +94,6 @@ with col2:
 
 st.divider()
 
-# Upload
 uploaded_file = st.file_uploader(
     "Upload your CSV file",
     type=['csv'],
@@ -105,29 +102,28 @@ uploaded_file = st.file_uploader(
 
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
-    
+
     st.markdown(f"### Preview — {len(df)} transactions loaded")
     st.dataframe(df.head(10), use_container_width=True, hide_index=True)
-    
-    # Validate columns
+
     required = ['TransactionAmt', 'C1', 'C2', 'C4', 'C5']
     missing = [c for c in required if c not in df.columns]
-    
+
     if missing:
         st.error(f"❌ Missing columns: {missing}")
         st.stop()
-    
+
     st.success(f"✅ File validated — {len(df)} transactions ready for screening")
-    
+
     if st.button("🔍 Run Batch Fraud Analysis", type="primary"):
-        
+
         results = []
         progress = st.progress(0)
         status = st.empty()
-        
+
         for i, row in df.iterrows():
-            status.markdown(f"Analyzing transaction {i+1} of {len(df)}...")
-            
+            status.markdown(f"⏳ Analyzing transaction {i+1} of {len(df)}...")
+
             payload = {
                 "TransactionAmt": float(row['TransactionAmt']),
                 "C1": float(row.get('C1', 1)),
@@ -141,11 +137,12 @@ if uploaded_file:
                 "V11": 1.0, "V12": 1.0, "V13": 1.0, "V14": 1.0, "V15": 1.0,
                 "V16": 1.0, "V17": 1.0, "V18": 1.0, "V19": 1.0, "V20": 1.0
             }
-            
+
             try:
                 response = requests.post(
                     "https://fraud-detection-gnn-production.up.railway.app/predict",
-                    json=payload, timeout=30
+                    json=payload,
+                    timeout=60
                 )
                 result = response.json()
                 results.append({
@@ -165,50 +162,51 @@ if uploaded_file:
                     'Prediction': 'ERROR',
                     'Fraud_Probability': 'N/A',
                     'Alert_Level': 'N/A',
-                    'Prediction_ID': 'N/A'
+                    'Prediction_ID': str(e)[:30]
                 })
-            
+
+            time.sleep(0.8)
             progress.progress((i+1) / len(df))
-        
+
         status.empty()
         progress.empty()
-        
+
         results_df = pd.DataFrame(results)
-        
-        # Summary
+
         fraud_count = len(results_df[results_df['Prediction'] == 'FRAUD'])
         legit_count = len(results_df[results_df['Prediction'] == 'LEGITIMATE'])
-        
+        error_count = len(results_df[results_df['Prediction'] == 'ERROR'])
+
         st.divider()
         st.markdown("## 📊 Batch Analysis Results")
-        
+
         m1, m2, m3, m4 = st.columns(4)
         with m1: st.metric("Total Screened", len(results_df))
         with m2: st.metric("Fraud Detected", fraud_count)
         with m3: st.metric("Legitimate", legit_count)
         with m4: st.metric("Fraud Rate", f"{fraud_count/len(results_df)*100:.1f}%")
-        
+
         st.divider()
-        
-        # Color coded results
         st.markdown("### Results Table")
-        
-        def highlight_fraud(row):
+
+        def highlight_row(row):
             if row['Prediction'] == 'FRAUD':
-                return ['background-color: #450a0a'] * len(row)
-            return ['background-color: #064e3b'] * len(row)
-        
+                return ['background-color: #450a0a; color: #fca5a5'] * len(row)
+            elif row['Prediction'] == 'LEGITIMATE':
+                return ['background-color: #064e3b; color: #6ee7b7'] * len(row)
+            else:
+                return ['background-color: #1e3a5f; color: #94a3b8'] * len(row)
+
         st.dataframe(
-            results_df.style.apply(highlight_fraud, axis=1),
+            results_df.style.apply(highlight_row, axis=1),
             use_container_width=True,
             hide_index=True
         )
-        
-        # Download results
+
         st.download_button(
             label="📥 Download Results CSV",
             data=results_df.to_csv(index=False),
-            file_name=f"fraudshield_batch_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+            file_name=f"fraudshield_batch_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
             mime="text/csv",
             use_container_width=True
         )
