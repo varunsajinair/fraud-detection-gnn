@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - SNOWFLAKE_USER=${SNOWFLAKE_USER}
+      - SNOWFLAKE_PASSWORD=${SNOWFLAKE_PASSWORD}
+      - SNOWFLAKE_ACCOUNT=${SNOWFLAKE_ACCOUNT}
+    restart: unless-stopped
+
+  dashboard:
+    image: python:3.10-slim
+    working_dir: /app
+    volumes:
+      - ./dashboard:/app
+    ports:
+      - "8501:8501"
+    command: >
+      bash -c "pip install -r requirements.txt && 
+               streamlit run dashboard.py --server.port 8501 --server.address 0.0.0.0"
+    environment:
+      - SNOWFLAKE_USER=${SNOWFLAKE_USER}
+      - SNOWFLAKE_PASSWORD=${SNOWFLAKE_PASSWORD}
+      - SNOWFLAKE_ACCOUNT=${SNOWFLAKE_ACCOUNT}
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+    restart: unless-stopped
