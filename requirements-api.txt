@@ -9,3 +9,4 @@ torch-geometric
 imbalanced-learn
 pydantic
 python-dotenv
+reportlab
