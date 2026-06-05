@@ -7,7 +7,7 @@ from datetime import datetime
 
 st.set_page_config(
     page_title="FraudShield — Batch Upload",
-    page_icon="📁",
+    page_icon="🛡️",
     layout="wide"
 )
 
@@ -42,9 +42,9 @@ st.markdown("""
 st.markdown("""
 <div style="background:linear-gradient(135deg,#0d1b2e,#1a2744);border-radius:16px;
      padding:24px 32px;margin-bottom:24px;border:1px solid #1e3a5f;">
-    <h1 style="margin:0;color:white;">📁 Batch Transaction Screening</h1>
-    <p style="color:#64748b;margin:4px 0 0 0;">
-    Upload a CSV of transactions — get fraud predictions for all of them instantly
+    <h1 style="margin:0;color:white;font-size:28px;">Batch Transaction Screening</h1>
+    <p style="color:#64748b;margin:6px 0 0 0;font-size:13px;">
+        Upload a CSV of transactions and get fraud predictions for all of them
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -52,12 +52,12 @@ st.markdown("""
 col1, col2 = st.columns([1.5, 1])
 
 with col1:
-    st.markdown("### 📋 How to use")
+    st.markdown("#### How to use")
     st.markdown("""
-    1. Download the **sample CSV template** below
+    1. Download the sample CSV template below
     2. Fill in your transaction data
     3. Upload the CSV file
-    4. Click **Run Batch Analysis**
+    4. Click Run Batch Analysis
     5. Download results with fraud predictions
     """)
 
@@ -70,7 +70,7 @@ with col1:
     })
 
     st.download_button(
-        label="📥 Download Sample CSV Template",
+        label="Download Sample CSV Template",
         data=sample_data.to_csv(index=False),
         file_name="fraudshield_template.csv",
         mime="text/csv",
@@ -78,7 +78,7 @@ with col1:
     )
 
 with col2:
-    st.markdown("### 📊 Required Columns")
+    st.markdown("#### Required Columns")
     st.markdown("""
     <div style="background:#0d1b2e;border:1px solid #1e3a5f;border-radius:10px;padding:16px;">
     <table style="width:100%;color:#cbd5e1;font-size:13px;">
@@ -103,26 +103,26 @@ uploaded_file = st.file_uploader(
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
 
-    st.markdown(f"### Preview — {len(df)} transactions loaded")
+    st.markdown(f"#### Preview — {len(df)} transactions loaded")
     st.dataframe(df.head(10), use_container_width=True, hide_index=True)
 
     required = ['TransactionAmt', 'C1', 'C2', 'C4', 'C5']
     missing = [c for c in required if c not in df.columns]
 
     if missing:
-        st.error(f"❌ Missing columns: {missing}")
+        st.error(f"Missing columns: {missing}")
         st.stop()
 
-    st.success(f"✅ File validated — {len(df)} transactions ready for screening")
+    st.success(f"{len(df)} transactions ready for screening")
 
-    if st.button("🔍 Run Batch Fraud Analysis", type="primary"):
+    if st.button("Run Batch Fraud Analysis", type="primary"):
 
         results = []
         progress = st.progress(0)
         status = st.empty()
 
         for i, row in df.iterrows():
-            status.markdown(f"⏳ Analyzing transaction {i+1} of {len(df)}...")
+            status.markdown(f"<p style='color:#64748b;font-size:13px;'>Analyzing transaction {i+1} of {len(df)}...</p>", unsafe_allow_html=True)
 
             payload = {
                 "TransactionAmt": float(row['TransactionAmt']),
@@ -175,10 +175,9 @@ if uploaded_file:
 
         fraud_count = len(results_df[results_df['Prediction'] == 'FRAUD'])
         legit_count = len(results_df[results_df['Prediction'] == 'LEGITIMATE'])
-        error_count = len(results_df[results_df['Prediction'] == 'ERROR'])
 
         st.divider()
-        st.markdown("## 📊 Batch Analysis Results")
+        st.markdown("### Batch Results")
 
         m1, m2, m3, m4 = st.columns(4)
         with m1: st.metric("Total Screened", len(results_df))
@@ -187,7 +186,6 @@ if uploaded_file:
         with m4: st.metric("Fraud Rate", f"{fraud_count/len(results_df)*100:.1f}%")
 
         st.divider()
-        st.markdown("### Results Table")
 
         def highlight_row(row):
             if row['Prediction'] == 'FRAUD':
@@ -204,7 +202,7 @@ if uploaded_file:
         )
 
         st.download_button(
-            label="📥 Download Results CSV",
+            label="Download Results CSV",
             data=results_df.to_csv(index=False),
             file_name=f"fraudshield_batch_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
             mime="text/csv",

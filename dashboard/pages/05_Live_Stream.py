@@ -7,7 +7,7 @@ from datetime import datetime
 
 st.set_page_config(
     page_title="FraudShield — Live Stream",
-    page_icon="⚡",
+    page_icon="🛡️",
     layout="wide"
 )
 
@@ -26,9 +26,9 @@ st.markdown("""
 st.markdown("""
 <div style="background:linear-gradient(135deg,#0d1b2e,#1a2744);border-radius:16px;
      padding:24px 32px;margin-bottom:24px;border:1px solid #1e3a5f;">
-    <h1 style="margin:0;color:white;">⚡ Live Transaction Stream</h1>
-    <p style="color:#64748b;margin:4px 0 0 0;">
-    Real-time fraud detection — watch the AI classify transactions as they arrive
+    <h1 style="margin:0;color:white;font-size:28px;">Live Transaction Stream</h1>
+    <p style="color:#64748b;margin:6px 0 0 0;font-size:13px;">
+        Simulated real-time fraud detection feed
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -40,64 +40,26 @@ def generate_transaction():
     if is_fraud_sim:
         return {
             "TransactionAmt": round(random.uniform(1000, 8000), 2),
-            "ProductCD": random.choice(["W", "H"]),
-            "card4": random.choice(["visa", "mastercard"]),
-            "card6": "credit",
-            "P_emaildomain": random.choice(["gmail.com", "yahoo.com"]),
-            "R_emaildomain": random.choice(["anonymous.com", "protonmail.com"]),
-            "C1": random.randint(1, 3),
-            "C2": random.randint(1, 3),
-            "C4": random.randint(0, 2),
-            "C5": random.randint(0, 2),
-            "C6": random.randint(1, 3),
-            "C7": random.randint(0, 2),
-            "C8": random.randint(1, 3),
-            "C9": random.randint(0, 2),
-            "C10": random.randint(0, 2),
-            "C11": random.randint(1, 3),
-            "C12": random.randint(0, 2),
-            "C13": random.randint(1, 5),
-            "C14": random.randint(1, 3),
-            "D1": random.randint(0, 10),
-            "D2": random.randint(0, 10),
-            "M1": random.choice(["T", "F"]),
-            "M2": random.choice(["T", "F"]),
-            "M3": random.choice(["T", "F"]),
-            "M4": random.choice(["M0", "M1", "M2"]),
-            "V1": round(random.uniform(0, 1), 2),
-            "V2": round(random.uniform(0, 1), 2),
-            "V3": round(random.uniform(0, 1), 2),
+            "C1": random.randint(1, 3), "C2": random.randint(1, 3),
+            "C3": 0.0,
+            "C4": random.randint(0, 2), "C5": random.randint(0, 2),
+            "C6": 1.0, "C7": 0.0, "C8": 0.0, "C9": 1.0, "C10": 0.0,
+            "V1": 1.0, "V2": 1.0, "V3": 1.0, "V4": 1.0, "V5": 1.0,
+            "V6": 1.0, "V7": 1.0, "V8": 1.0, "V9": 1.0, "V10": 1.0,
+            "V11": 1.0, "V12": 1.0, "V13": 1.0, "V14": 1.0, "V15": 1.0,
+            "V16": 1.0, "V17": 1.0, "V18": 1.0, "V19": 1.0, "V20": 1.0
         }
     else:
         return {
             "TransactionAmt": round(random.uniform(10, 500), 2),
-            "ProductCD": random.choice(["W", "C", "R"]),
-            "card4": random.choice(["visa", "mastercard", "discover"]),
-            "card6": random.choice(["debit", "credit"]),
-            "P_emaildomain": random.choice(["gmail.com", "outlook.com", "yahoo.com"]),
-            "R_emaildomain": random.choice(["gmail.com", "outlook.com"]),
-            "C1": random.randint(1, 10),
-            "C2": random.randint(1, 10),
-            "C4": random.randint(0, 5),
-            "C5": random.randint(0, 3),
-            "C6": random.randint(1, 8),
-            "C7": random.randint(0, 3),
-            "C8": random.randint(1, 6),
-            "C9": random.randint(0, 4),
-            "C10": random.randint(0, 4),
-            "C11": random.randint(1, 6),
-            "C12": random.randint(0, 3),
-            "C13": random.randint(1, 20),
-            "C14": random.randint(1, 8),
-            "D1": random.randint(0, 100),
-            "D2": random.randint(0, 100),
-            "M1": random.choice(["T", "F"]),
-            "M2": random.choice(["T", "F"]),
-            "M3": random.choice(["T", "F"]),
-            "M4": random.choice(["M0", "M1", "M2"]),
-            "V1": round(random.uniform(0, 1), 2),
-            "V2": round(random.uniform(0, 1), 2),
-            "V3": round(random.uniform(0, 1), 2),
+            "C1": random.randint(1, 10), "C2": random.randint(1, 10),
+            "C3": 0.0,
+            "C4": random.randint(0, 5), "C5": random.randint(0, 3),
+            "C6": 1.0, "C7": 0.0, "C8": 0.0, "C9": 1.0, "C10": 0.0,
+            "V1": 1.0, "V2": 1.0, "V3": 1.0, "V4": 1.0, "V5": 1.0,
+            "V6": 1.0, "V7": 1.0, "V8": 1.0, "V9": 1.0, "V10": 1.0,
+            "V11": 1.0, "V12": 1.0, "V13": 1.0, "V14": 1.0, "V15": 1.0,
+            "V16": 1.0, "V17": 1.0, "V18": 1.0, "V19": 1.0, "V20": 1.0
         }
 
 if 'transactions' not in st.session_state:
@@ -111,15 +73,15 @@ if 'fraud_count' not in st.session_state:
 
 col1, col2, col3, col4 = st.columns(4)
 with col1:
-    if st.button("▶ Start Stream", use_container_width=True, type="primary"):
+    if st.button("Start Stream", use_container_width=True, type="primary"):
         st.session_state.running = True
 with col2:
-    if st.button("⏹ Stop Stream", use_container_width=True):
+    if st.button("Stop Stream", use_container_width=True):
         st.session_state.running = False
 with col3:
     speed = st.selectbox("Speed", ["Slow (2s)", "Normal (1s)", "Fast (0.5s)"], index=1)
 with col4:
-    if st.button("🗑 Clear", use_container_width=True):
+    if st.button("Clear", use_container_width=True):
         st.session_state.transactions = []
         st.session_state.total = 0
         st.session_state.fraud_count = 0
@@ -147,7 +109,7 @@ def render_transactions():
         is_fraud = tx['prediction'] == 'FRAUD'
         bg = "#1a0505" if is_fraud else "#051a0f"
         border = "#dc2626" if is_fraud else "#059669"
-        icon = "⚠️" if is_fraud else "✅"
+        icon = "❌" if is_fraud else "✅"
         prob_color = "#dc2626" if is_fraud else "#059669"
 
         html += f"""
@@ -155,7 +117,7 @@ def render_transactions():
                     padding:12px 16px;margin-bottom:6px;display:flex;
                     justify-content:space-between;align-items:center;">
             <div style="display:flex;align-items:center;gap:12px;">
-                <span style="font-size:18px;">{icon}</span>
+                <span style="font-size:16px;">{icon}</span>
                 <div>
                     <span style="color:white;font-weight:bold;font-size:13px;">{tx['id']}</span>
                     <span style="color:#64748b;font-size:11px;margin-left:8px;">{tx['time']}</span>

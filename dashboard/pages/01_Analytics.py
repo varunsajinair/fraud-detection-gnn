@@ -7,7 +7,7 @@ from datetime import datetime
 
 st.set_page_config(
     page_title="FraudShield — Analytics",
-    page_icon="📊",
+    page_icon="🛡️",
     layout="wide"
 )
 
@@ -23,9 +23,15 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("# 📊 FraudShield Analytics")
-st.markdown("#### Live data from Snowflake — All predictions ever made")
-st.divider()
+st.markdown("""
+<div style="background:linear-gradient(135deg,#0d1b2e,#1a2744);border-radius:16px;
+     padding:24px 32px;margin-bottom:24px;border:1px solid #1e3a5f;">
+    <h1 style="margin:0;color:white;font-size:28px;">Analytics</h1>
+    <p style="color:#64748b;margin:6px 0 0 0;font-size:13px;">
+        All predictions logged to Snowflake
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
 @st.cache_data(ttl=30)
 def load_data():
@@ -53,12 +59,11 @@ def load_data():
 df = load_data()
 
 if df.empty:
-    st.warning("No predictions found in Snowflake yet. Make some predictions first!")
+    st.warning("No predictions found in Snowflake yet.")
     st.stop()
 
 df['TIMESTAMP'] = pd.to_datetime(df['TIMESTAMP'])
 
-# ── TOP METRICS ───────────────────────────────────────────
 total = len(df)
 fraud_count = len(df[df['PREDICTION'] == 'FRAUD'])
 legit_count = len(df[df['PREDICTION'] == 'LEGITIMATE'])
@@ -77,7 +82,6 @@ with m6: st.metric("Fraud Amount", f"${fraud_amount:,.0f}", delta_color="inverse
 
 st.divider()
 
-# ── ROW 1 ─────────────────────────────────────────────────
 r1c1, r1c2, r1c3 = st.columns(3)
 
 with r1c1:
@@ -142,7 +146,6 @@ with r1c3:
     )
     st.plotly_chart(fig3, use_container_width=True)
 
-# ── ROW 2 ─────────────────────────────────────────────────
 r2c1, r2c2 = st.columns(2)
 
 with r2c1:
@@ -200,12 +203,11 @@ with r2c2:
         )
         st.plotly_chart(fig5, use_container_width=True)
     else:
-        st.info("Make more predictions to see the timeline!")
+        st.info("Make more predictions to see the timeline.")
 
 st.divider()
 
-# ── ALL PREDICTIONS TABLE ─────────────────────────────────
-st.markdown("### 📋 All Predictions — Snowflake Database")
+st.markdown("### All Predictions")
 
 display = df[['PREDICTION_ID', 'TIMESTAMP', 'TRANSACTION_AMOUNT',
               'C1', 'C2', 'C4', 'FRAUD_PROBABILITY', 'PREDICTION', 'ALERT_LEVEL']].copy()
@@ -217,7 +219,7 @@ st.dataframe(display, use_container_width=True, hide_index=True)
 
 csv = df.to_csv(index=False)
 st.download_button(
-    label="📥 Export All Data (CSV)",
+    label="Export All Data (CSV)",
     data=csv,
     file_name=f"fraudshield_analytics_{datetime.now().strftime('%Y%m%d')}.csv",
     mime="text/csv",

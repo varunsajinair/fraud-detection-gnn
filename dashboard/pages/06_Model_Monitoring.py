@@ -9,7 +9,7 @@ import numpy as np
 
 st.set_page_config(
     page_title="FraudShield — Model Monitoring",
-    page_icon="📡",
+    page_icon="🛡️",
     layout="wide"
 )
 
@@ -28,9 +28,9 @@ st.markdown("""
 st.markdown("""
 <div style="background:linear-gradient(135deg,#0d1b2e,#1a2744);border-radius:16px;
      padding:24px 32px;margin-bottom:24px;border:1px solid #1e3a5f;">
-    <h1 style="margin:0;color:white;">📡 Model Monitoring Dashboard</h1>
-    <p style="color:#64748b;margin:4px 0 0 0;">
-    Track model performance, detect data drift, and monitor prediction health in production
+    <h1 style="margin:0;color:white;font-size:28px;">Model Monitoring</h1>
+    <p style="color:#64748b;margin:6px 0 0 0;font-size:13px;">
+        Track prediction health and detect data drift in production
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -61,7 +61,7 @@ def load_all_predictions():
 df = load_all_predictions()
 
 if df.empty:
-    st.warning("No predictions found yet!")
+    st.warning("No predictions found yet.")
     st.stop()
 
 df['TIMESTAMP'] = pd.to_datetime(df['TIMESTAMP'])
@@ -84,8 +84,7 @@ with m5: st.metric("High Risk Transactions", f"{high_risk:,}")
 
 st.divider()
 
-# FRAUD RATE OVER TIME
-st.markdown("### 📈 Fraud Rate Over Time")
+st.markdown("### Fraud Rate Over Time")
 
 daily = df.groupby('DATE').agg(
     total=('PREDICTION_ID', 'count'),
@@ -122,9 +121,8 @@ st.plotly_chart(fig1, use_container_width=True)
 
 st.divider()
 
-# DATA DRIFT DETECTION
-st.markdown("### 🔍 Data Drift Detection")
-st.markdown("<p style='color:#64748b;font-size:13px;'>Compares recent predictions vs baseline — detects if input distribution is shifting (PSI score)</p>", unsafe_allow_html=True)
+st.markdown("### Data Drift Detection")
+st.markdown("<p style='color:#64748b;font-size:13px;'>Compares recent predictions vs baseline using PSI (Population Stability Index)</p>", unsafe_allow_html=True)
 
 def compute_psi(expected, actual, bins=10):
     breakpoints = np.linspace(
@@ -148,7 +146,7 @@ with col1:
 
         fig2 = go.Figure()
         fig2.add_trace(go.Histogram(
-            x=baseline_amt, name='Baseline (older)',
+            x=baseline_amt, name='Baseline',
             marker_color='#185FA5', opacity=0.7, nbinsx=20
         ))
         fig2.add_trace(go.Histogram(
@@ -156,7 +154,7 @@ with col1:
             marker_color='#dc2626', opacity=0.7, nbinsx=20
         ))
         fig2.update_layout(
-            title='Transaction Amount Distribution Drift',
+            title='Transaction Amount Drift',
             barmode='overlay',
             paper_bgcolor='#0f172a', plot_bgcolor='#0f172a',
             font=dict(color='white'),
@@ -169,23 +167,23 @@ with col1:
 
         psi = compute_psi(baseline_amt, recent_amt)
         if psi < 0.1:
-            psi_status = "✅ No Drift"
+            psi_status = "No Drift"
             psi_color = "#059669"
-            psi_msg = "Distribution is stable — model is healthy"
+            psi_msg = "Distribution is stable"
         elif psi < 0.2:
-            psi_status = "⚠️ Minor Drift"
+            psi_status = "Minor Drift"
             psi_color = "#f97316"
             psi_msg = "Slight distribution shift — monitor closely"
         else:
-            psi_status = "🚨 Major Drift!"
+            psi_status = "Major Drift"
             psi_color = "#dc2626"
-            psi_msg = "Significant drift detected — consider retraining!"
+            psi_msg = "Significant drift — consider retraining"
 
         st.markdown(f"""
         <div style="background:#0f172a;border:1px solid {psi_color};border-radius:8px;padding:16px;margin-top:8px;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
                 <span style="color:{psi_color};font-weight:bold;font-size:16px;">{psi_status}</span>
-                <span style="color:white;font-weight:bold;">PSI Score: {psi:.4f}</span>
+                <span style="color:white;font-weight:bold;">PSI: {psi:.4f}</span>
             </div>
             <p style="color:#64748b;margin:4px 0 0 0;font-size:12px;">{psi_msg}</p>
         </div>
@@ -198,7 +196,7 @@ with col2:
 
         fig3 = go.Figure()
         fig3.add_trace(go.Histogram(
-            x=baseline_prob, name='Baseline (older)',
+            x=baseline_prob, name='Baseline',
             marker_color='#185FA5', opacity=0.7, nbinsx=20
         ))
         fig3.add_trace(go.Histogram(
@@ -206,7 +204,7 @@ with col2:
             marker_color='#dc2626', opacity=0.7, nbinsx=20
         ))
         fig3.update_layout(
-            title='Fraud Probability Score Distribution Drift',
+            title='Fraud Probability Score Drift',
             barmode='overlay',
             paper_bgcolor='#0f172a', plot_bgcolor='#0f172a',
             font=dict(color='white'),
@@ -219,23 +217,23 @@ with col2:
 
         psi2 = compute_psi(baseline_prob, recent_prob)
         if psi2 < 0.1:
-            psi2_status = "✅ No Drift"
+            psi2_status = "No Drift"
             psi2_color = "#059669"
             psi2_msg = "Model confidence is stable"
         elif psi2 < 0.2:
-            psi2_status = "⚠️ Minor Drift"
+            psi2_status = "Minor Drift"
             psi2_color = "#f97316"
             psi2_msg = "Model confidence shifting slightly"
         else:
-            psi2_status = "🚨 Major Drift!"
+            psi2_status = "Major Drift"
             psi2_color = "#dc2626"
-            psi2_msg = "Model confidence drifting — check for concept drift!"
+            psi2_msg = "Model confidence drifting — check for concept drift"
 
         st.markdown(f"""
         <div style="background:#0f172a;border:1px solid {psi2_color};border-radius:8px;padding:16px;margin-top:8px;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
                 <span style="color:{psi2_color};font-weight:bold;font-size:16px;">{psi2_status}</span>
-                <span style="color:white;font-weight:bold;">PSI Score: {psi2:.4f}</span>
+                <span style="color:white;font-weight:bold;">PSI: {psi2:.4f}</span>
             </div>
             <p style="color:#64748b;margin:4px 0 0 0;font-size:12px;">{psi2_msg}</p>
         </div>
@@ -243,8 +241,7 @@ with col2:
 
 st.divider()
 
-# PREDICTION CONFIDENCE OVER TIME
-st.markdown("### 🎯 Model Confidence Over Time")
+st.markdown("### Model Confidence Over Time")
 
 fig4 = go.Figure()
 fraud_df = df[df['IS_FRAUD'] == 1]
@@ -274,23 +271,17 @@ st.plotly_chart(fig4, use_container_width=True)
 
 st.divider()
 
-# ALERT LEVEL BREAKDOWN + HOURLY HEATMAP
 col3, col4 = st.columns(2)
 
 with col3:
-    st.markdown("### 🚨 Alert Level Distribution")
+    st.markdown("### Alert Level Distribution")
     alert_counts = df['ALERT_LEVEL'].value_counts().reset_index()
     alert_counts.columns = ['Alert Level', 'Count']
-
     color_map = {
-        'CRITICAL': '#dc2626',
-        'HIGH RISK': '#f97316',
-        'MEDIUM RISK': '#fbbf24',
-        'LOW RISK': '#059669',
-        'LOW': '#059669'
+        'CRITICAL': '#dc2626', 'HIGH RISK': '#f97316',
+        'MEDIUM RISK': '#fbbf24', 'LOW RISK': '#059669', 'LOW': '#059669'
     }
     colors = [color_map.get(a, '#185FA5') for a in alert_counts['Alert Level']]
-
     fig5 = go.Figure(go.Bar(
         x=alert_counts['Alert Level'],
         y=alert_counts['Count'],
@@ -306,17 +297,15 @@ with col3:
     st.plotly_chart(fig5, use_container_width=True)
 
 with col4:
-    st.markdown("### ⏰ Fraud by Hour of Day")
+    st.markdown("### Fraud by Hour of Day")
     hourly = df.groupby('HOUR').agg(
         total=('PREDICTION_ID', 'count'),
         fraud=('IS_FRAUD', 'sum')
     ).reset_index()
     hourly['fraud_rate'] = hourly['fraud'] / hourly['total'] * 100
-
     fig6 = go.Figure(go.Bar(
         x=hourly['HOUR'],
         y=hourly['fraud_rate'],
-        marker_color='#185FA5',
         marker=dict(
             color=hourly['fraud_rate'],
             colorscale=[[0, '#059669'], [0.5, '#f97316'], [1, '#dc2626']],
@@ -334,39 +323,34 @@ with col4:
 
 st.divider()
 
-# MODEL HEALTH STATUS
-st.markdown("### 🏥 Model Health Status")
+st.markdown("### Model Health")
 
 health_checks = []
 
-# Check 1: Fraud rate
 if fraud_rate < 5:
-    health_checks.append(("Fraud Rate", "✅ Normal", f"{fraud_rate:.1f}% — within expected range", "#059669"))
+    health_checks.append(("Fraud Rate", "Normal", f"{fraud_rate:.1f}% — within expected range", "#059669"))
 elif fraud_rate < 20:
-    health_checks.append(("Fraud Rate", "⚠️ Elevated", f"{fraud_rate:.1f}% — above typical baseline", "#f97316"))
+    health_checks.append(("Fraud Rate", "Elevated", f"{fraud_rate:.1f}% — above typical baseline", "#f97316"))
 else:
-    health_checks.append(("Fraud Rate", "🚨 Critical", f"{fraud_rate:.1f}% — extremely high!", "#dc2626"))
+    health_checks.append(("Fraud Rate", "Critical", f"{fraud_rate:.1f}% — extremely high", "#dc2626"))
 
-# Check 2: Avg confidence
 if avg_prob < 60:
-    health_checks.append(("Model Confidence", "✅ Good", f"Avg fraud prob: {avg_prob:.1f}%", "#059669"))
+    health_checks.append(("Model Confidence", "Good", f"Avg fraud prob: {avg_prob:.1f}%", "#059669"))
 else:
-    health_checks.append(("Model Confidence", "⚠️ High", f"Avg fraud prob: {avg_prob:.1f}% — many borderline cases", "#f97316"))
+    health_checks.append(("Model Confidence", "High", f"Avg fraud prob: {avg_prob:.1f}% — many borderline cases", "#f97316"))
 
-# Check 3: High risk volume
 high_risk_rate = high_risk / total * 100
 if high_risk_rate < 5:
-    health_checks.append(("High Risk Volume", "✅ Normal", f"{high_risk} transactions ({high_risk_rate:.1f}%)", "#059669"))
+    health_checks.append(("High Risk Volume", "Normal", f"{high_risk} transactions ({high_risk_rate:.1f}%)", "#059669"))
 else:
-    health_checks.append(("High Risk Volume", "⚠️ Elevated", f"{high_risk} transactions ({high_risk_rate:.1f}%) — investigate!", "#f97316"))
+    health_checks.append(("High Risk Volume", "Elevated", f"{high_risk} transactions ({high_risk_rate:.1f}%)", "#f97316"))
 
-# Check 4: Data drift
 if psi < 0.1:
-    health_checks.append(("Data Drift", "✅ Stable", "No significant distribution shift detected", "#059669"))
+    health_checks.append(("Data Drift", "Stable", "No significant distribution shift", "#059669"))
 elif psi < 0.2:
-    health_checks.append(("Data Drift", "⚠️ Minor Drift", "Monitor input distribution closely", "#f97316"))
+    health_checks.append(("Data Drift", "Minor Drift", "Monitor input distribution closely", "#f97316"))
 else:
-    health_checks.append(("Data Drift", "🚨 Major Drift", "Retraining recommended!", "#dc2626"))
+    health_checks.append(("Data Drift", "Major Drift", "Retraining recommended", "#dc2626"))
 
 cols = st.columns(4)
 for i, (check_name, status, detail, color) in enumerate(health_checks):
@@ -384,10 +368,9 @@ st.divider()
 
 st.markdown("""
 <div style="background:#0f172a;border:1px solid #1e3a5f;border-radius:8px;padding:16px;">
-    <p style="color:#64748b;margin:0;font-size:13px;">
-    💡 <b style="color:#cbd5e1;">PSI (Population Stability Index)</b> measures data drift:
-    PSI &lt; 0.1 = stable, 0.1–0.2 = minor drift, &gt; 0.2 = major drift requiring model retraining.
-    Banks use PSI as the industry standard metric for detecting when fraud models need retraining.
+    <p style="color:#94a3b8;margin:0;font-size:13px;line-height:1.7;">
+        <b style="color:white;">PSI thresholds:</b> below 0.1 = stable, 0.1-0.2 = minor drift, above 0.2 = major drift.
+        PSI measures how much the input distribution has shifted since the model was trained.
     </p>
 </div>
 """, unsafe_allow_html=True)

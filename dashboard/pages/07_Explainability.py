@@ -7,7 +7,7 @@ import numpy as np
 
 st.set_page_config(
     page_title="FraudShield — Explainability",
-    page_icon="🧠",
+    page_icon="🛡️",
     layout="wide"
 )
 
@@ -26,18 +26,9 @@ st.markdown("""
 st.markdown("""
 <div style="background:linear-gradient(135deg,#0d1b2e,#1a2744);border-radius:16px;
      padding:24px 32px;margin-bottom:24px;border:1px solid #1e3a5f;">
-    <h1 style="margin:0;color:white;">🧠 Explainable AI (XAI)</h1>
-    <p style="color:#64748b;margin:4px 0 0 0;">
-    Understand WHY the model flagged a transaction — feature contribution analysis per prediction
-    </p>
-</div>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-<div style="background:#0f172a;border:1px solid #1e3a5f;border-radius:8px;padding:12px 16px;margin-bottom:16px;">
-    <p style="color:#64748b;margin:0;font-size:13px;">
-    💡 <b style="color:#cbd5e1;">GDPR Article 22</b> requires banks to explain automated decisions to customers.
-    This page shows feature-level explanations for every fraud prediction — exactly what compliance officers need.
+    <h1 style="margin:0;color:white;font-size:28px;">Explainability</h1>
+    <p style="color:#64748b;margin:6px 0 0 0;font-size:13px;">
+        Feature contribution breakdown per prediction — shows why the model flagged a transaction
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -66,14 +57,9 @@ def load_predictions():
         return pd.DataFrame()
 
 def explain_transaction(row):
-    """
-    Rule-based explainability using domain knowledge about fraud features.
-    Returns feature contributions as percentages explaining the fraud score.
-    """
     contributions = {}
     fraud_prob = row['FRAUD_PROBABILITY']
 
-    # Transaction Amount contribution
     amt = row['TRANSACTION_AMOUNT']
     if amt > 5000:
         contributions['Transaction Amount'] = 0.35
@@ -84,7 +70,6 @@ def explain_transaction(row):
     else:
         contributions['Transaction Amount'] = -0.10
 
-    # C1 — count of addresses associated with payment card
     c1 = row['C1']
     if c1 <= 2:
         contributions['Address Count (C1)'] = 0.25
@@ -93,7 +78,6 @@ def explain_transaction(row):
     else:
         contributions['Address Count (C1)'] = -0.05
 
-    # C2 — count of addresses per card
     c2 = row['C2']
     if c2 <= 2:
         contributions['Card Address Count (C2)'] = 0.20
@@ -102,7 +86,6 @@ def explain_transaction(row):
     else:
         contributions['Card Address Count (C2)'] = -0.05
 
-    # C4 — count of phone numbers
     c4 = row['C4']
     if c4 <= 1:
         contributions['Phone Count (C4)'] = 0.15
@@ -111,7 +94,6 @@ def explain_transaction(row):
     else:
         contributions['Phone Count (C4)'] = -0.03
 
-    # C5 — count of devices
     c5 = row['C5']
     if c5 <= 1:
         contributions['Device Count (C5)'] = 0.10
@@ -120,7 +102,6 @@ def explain_transaction(row):
     else:
         contributions['Device Count (C5)'] = -0.03
 
-    # Alert level contribution
     alert = row['ALERT_LEVEL']
     if 'CRITICAL' in str(alert):
         contributions['Risk Score'] = 0.30
@@ -131,7 +112,6 @@ def explain_transaction(row):
     else:
         contributions['Risk Score'] = -0.05
 
-    # Normalize to reflect actual fraud probability
     total_pos = sum(v for v in contributions.values() if v > 0)
     if total_pos > 0:
         scale = fraud_prob / total_pos
@@ -142,13 +122,13 @@ def explain_transaction(row):
 df = load_predictions()
 
 if df.empty:
-    st.warning("No predictions found yet!")
+    st.warning("No predictions found yet.")
     st.stop()
 
 col1, col2 = st.columns([1, 2])
 
 with col1:
-    st.markdown("### 🔎 Select Transaction")
+    st.markdown("#### Select Transaction")
 
     filter_type = st.radio(
         "Show",
@@ -164,13 +144,13 @@ with col1:
         df_filtered = df
 
     if df_filtered.empty:
-        st.warning("No transactions match filter!")
+        st.warning("No transactions match filter.")
         st.stop()
 
     selected_id = st.selectbox(
         "Pick a transaction",
         options=df_filtered['PREDICTION_ID'].tolist(),
-        format_func=lambda x: f"{'⚠️' if df_filtered[df_filtered['PREDICTION_ID']==x]['PREDICTION'].values[0]=='FRAUD' else '✅'} {x[:10]}... ${df_filtered[df_filtered['PREDICTION_ID']==x]['TRANSACTION_AMOUNT'].values[0]:,.0f}"
+        format_func=lambda x: f"{'FRAUD' if df_filtered[df_filtered['PREDICTION_ID']==x]['PREDICTION'].values[0]=='FRAUD' else 'LEGIT'} — {x[:10]}... ${df_filtered[df_filtered['PREDICTION_ID']==x]['TRANSACTION_AMOUNT'].values[0]:,.0f}"
     )
 
     row = df_filtered[df_filtered['PREDICTION_ID'] == selected_id].iloc[0]
@@ -182,36 +162,23 @@ with col1:
     <div style="background:{bg_color};border:1px solid {border_color};
                 border-radius:12px;padding:16px;margin-top:12px;">
         <p style="color:white;font-weight:bold;margin:0;">
-            {'⚠️ FRAUD DETECTED' if is_fraud else '✅ LEGITIMATE'}
+            {'FRAUD DETECTED' if is_fraud else 'LEGITIMATE'}
         </p>
         <hr style="border-color:{border_color};margin:8px 0;">
-        <p style="color:#cbd5e1;margin:2px 0;font-size:13px;">
-            <b>ID:</b> {row['PREDICTION_ID'][:16]}...
-        </p>
-        <p style="color:#cbd5e1;margin:2px 0;font-size:13px;">
-            <b>Amount:</b> ${row['TRANSACTION_AMOUNT']:,.2f}
-        </p>
-        <p style="color:#cbd5e1;margin:2px 0;font-size:13px;">
-            <b>Fraud Probability:</b> {row['FRAUD_PROBABILITY']*100:.1f}%
-        </p>
-        <p style="color:#cbd5e1;margin:2px 0;font-size:13px;">
-            <b>Alert Level:</b> {row['ALERT_LEVEL']}
-        </p>
-        <p style="color:#cbd5e1;margin:2px 0;font-size:13px;">
-            <b>C1:</b> {row['C1']} | <b>C2:</b> {row['C2']} | 
-            <b>C4:</b> {row['C4']} | <b>C5:</b> {row['C5']}
-        </p>
+        <p style="color:#cbd5e1;margin:2px 0;font-size:13px;"><b>ID:</b> {row['PREDICTION_ID'][:16]}...</p>
+        <p style="color:#cbd5e1;margin:2px 0;font-size:13px;"><b>Amount:</b> ${row['TRANSACTION_AMOUNT']:,.2f}</p>
+        <p style="color:#cbd5e1;margin:2px 0;font-size:13px;"><b>Fraud Probability:</b> {row['FRAUD_PROBABILITY']*100:.1f}%</p>
+        <p style="color:#cbd5e1;margin:2px 0;font-size:13px;"><b>Alert Level:</b> {row['ALERT_LEVEL']}</p>
+        <p style="color:#cbd5e1;margin:2px 0;font-size:13px;"><b>C1:</b> {row['C1']} | <b>C2:</b> {row['C2']} | <b>C4:</b> {row['C4']} | <b>C5:</b> {row['C5']}</p>
     </div>
     """, unsafe_allow_html=True)
 
 with col2:
-    st.markdown("### 📊 Feature Contributions to Fraud Score")
+    st.markdown("#### Feature Contributions")
 
     contributions = explain_transaction(row)
-
     features = list(contributions.keys())
     values = list(contributions.values())
-
     colors = ['#dc2626' if v > 0 else '#059669' for v in values]
 
     fig = go.Figure(go.Bar(
@@ -223,27 +190,19 @@ with col2:
         textposition='outside',
         textfont=dict(color='white', size=12)
     ))
-
     fig.add_vline(x=0, line_color='white', line_width=1)
     fig.update_layout(
-        paper_bgcolor='#0f172a',
-        plot_bgcolor='#0f172a',
+        paper_bgcolor='#0f172a', plot_bgcolor='#0f172a',
         font=dict(color='white'),
-        xaxis=dict(
-            gridcolor='#1e3a5f',
-            color='white',
-            title='Contribution to Fraud Score',
-            zeroline=True,
-            zerolinecolor='white'
-        ),
+        xaxis=dict(gridcolor='#1e3a5f', color='white',
+                   title='Contribution to Fraud Score',
+                   zeroline=True, zerolinecolor='white'),
         yaxis=dict(gridcolor='#1e3a5f', color='white'),
-        height=380,
-        margin=dict(t=20, b=20, l=20, r=80)
+        height=380, margin=dict(t=20, b=20, l=20, r=80)
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    # Fraud probability gauge
-    st.markdown("### 🎯 Fraud Probability Gauge")
+    st.markdown("#### Fraud Probability Gauge")
     fig_gauge = go.Figure(go.Indicator(
         mode="gauge+number+delta",
         value=row['FRAUD_PROBABILITY'] * 100,
@@ -264,23 +223,19 @@ with col2:
             ],
             'threshold': {
                 'line': {'color': '#f97316', 'width': 4},
-                'thickness': 0.75,
-                'value': 50
+                'thickness': 0.75, 'value': 50
             }
         },
         number={'font': {'color': 'white', 'size': 40}, 'suffix': '%'}
     ))
     fig_gauge.update_layout(
-        paper_bgcolor='#0f172a',
-        height=280,
-        margin=dict(t=20, b=20)
+        paper_bgcolor='#0f172a', height=280, margin=dict(t=20, b=20)
     )
     st.plotly_chart(fig_gauge, use_container_width=True)
 
 st.divider()
 
-# GLOBAL FEATURE IMPORTANCE
-st.markdown("### 🌍 Global Feature Importance (Across All Predictions)")
+st.markdown("### Global Feature Importance")
 st.markdown("<p style='color:#64748b;font-size:13px;'>Average feature contribution across all fraud predictions</p>", unsafe_allow_html=True)
 
 fraud_only = df[df['PREDICTION'] == 'FRAUD']
@@ -321,11 +276,10 @@ st.divider()
 
 st.markdown("""
 <div style="background:#0f172a;border:1px solid #1e3a5f;border-radius:8px;padding:16px;">
-    <p style="color:#64748b;margin:0;font-size:13px;">
-    💡 <b style="color:#cbd5e1;">How this works:</b> Each feature's contribution is calculated using 
-    domain-driven scoring based on IEEE-CIS fraud patterns. Red bars = features pushing toward FRAUD, 
-    Green bars = features pushing toward LEGITIMATE. This mirrors how SHAP values work in production 
-    banking systems — giving compliance officers a clear audit trail for every automated decision.
+    <p style="color:#94a3b8;margin:0;font-size:13px;line-height:1.7;">
+        <b style="color:white;">How this works:</b> Feature contributions are calculated using domain-driven 
+        scoring based on IEEE-CIS fraud patterns. Red bars push the score toward fraud, green bars push toward 
+        legitimate. This mirrors how SHAP values work — each feature's contribution sums to the final fraud probability.
     </p>
 </div>
 """, unsafe_allow_html=True)

@@ -9,7 +9,7 @@ import streamlit.components.v1 as components
 
 st.set_page_config(
     page_title="FraudShield — Graph Visualization",
-    page_icon="🕸️",
+    page_icon="🛡️",
     layout="wide"
 )
 
@@ -28,9 +28,9 @@ st.markdown("""
 st.markdown("""
 <div style="background:linear-gradient(135deg,#0d1b2e,#1a2744);border-radius:16px;
      padding:24px 32px;margin-bottom:24px;border:1px solid #1e3a5f;">
-    <h1 style="margin:0;color:white;">🕸️ Transaction Graph Visualization</h1>
-    <p style="color:#64748b;margin:4px 0 0 0;">
-    Interactive graph showing connections between transactions — red nodes = fraud, green = legitimate
+    <h1 style="margin:0;color:white;font-size:28px;">Transaction Graph</h1>
+    <p style="color:#64748b;margin:6px 0 0 0;font-size:13px;">
+        Interactive graph of transaction connections — red nodes are fraud, green are legitimate
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -61,10 +61,9 @@ def load_data():
 df = load_data()
 
 if df.empty:
-    st.warning("No predictions found. Make some predictions first!")
+    st.warning("No predictions found. Make some predictions first.")
     st.stop()
 
-# Stats
 total = len(df)
 fraud_count = len(df[df['PREDICTION'] == 'FRAUD'])
 legit_count = len(df[df['PREDICTION'] == 'LEGITIMATE'])
@@ -77,7 +76,6 @@ with m4: st.metric("Graph Density", f"{(total/(total*total))*100:.1f}%")
 
 st.divider()
 
-# Controls
 col1, col2, col3 = st.columns(3)
 with col1:
     show_fraud_only = st.checkbox("Show Fraud Nodes Only", value=False)
@@ -88,7 +86,6 @@ with col3:
 
 st.divider()
 
-# Build graph
 net = Network(
     height="600px",
     width="100%",
@@ -106,13 +103,11 @@ if physics:
         damping=0.09
     )
 
-# Filter if needed
 if show_fraud_only:
     df_plot = df[df['PREDICTION'] == 'FRAUD']
 else:
     df_plot = df
 
-# Add central hub node
 net.add_node(
     'FRAUDSHIELD_SYSTEM',
     label='FraudShield\nAI System',
@@ -123,7 +118,6 @@ net.add_node(
     title='Central Fraud Detection System'
 )
 
-# Add transaction nodes
 for _, row in df_plot.iterrows():
     pid = row['PREDICTION_ID']
     is_fraud = row['PREDICTION'] == 'FRAUD'
@@ -134,7 +128,7 @@ for _, row in df_plot.iterrows():
     size = node_size + int(prob * 20)
     shape = 'star' if is_fraud else 'dot'
 
-    label = f"{'⚠' if is_fraud else '✓'} {pid[:6]}\n${amount:.0f}"
+    label = f"{pid[:6]}\n${amount:.0f}"
     title = f"""
     <div style='background:#1e293b;padding:10px;border-radius:8px;color:white;'>
         <b>Transaction ID:</b> {pid}<br>
@@ -158,7 +152,6 @@ for _, row in df_plot.iterrows():
         borderWidthSelected=4
     )
 
-    # Edge to hub
     edge_color = '#dc2626' if is_fraud else '#059669'
     edge_width = 3 if is_fraud else 1
     net.add_edge(
@@ -169,14 +162,12 @@ for _, row in df_plot.iterrows():
         dashes=not is_fraud
     )
 
-# Connect fraud nodes to each other if they share similar features
 fraud_nodes = df_plot[df_plot['PREDICTION'] == 'FRAUD']
 fraud_list = fraud_nodes.to_dict('records')
 for i in range(len(fraud_list)):
     for j in range(i+1, len(fraud_list)):
         n1 = fraud_list[i]
         n2 = fraud_list[j]
-        # Connect if they share similar C1 or C2 values (fraud ring pattern)
         if abs(n1['C1'] - n2['C1']) <= 1 or abs(n1['C2'] - n2['C2']) <= 1:
             net.add_edge(
                 n1['PREDICTION_ID'],
@@ -187,7 +178,6 @@ for i in range(len(fraud_list)):
                 title='Similar fraud pattern detected'
             )
 
-# Save and display
 with tempfile.NamedTemporaryFile(delete=False, suffix='.html', mode='w') as f:
     net.save_graph(f.name)
     html_content = open(f.name, 'r').read()
@@ -196,20 +186,19 @@ components.html(html_content, height=620)
 
 st.divider()
 
-# Legend
 st.markdown("""
 <div style="display:flex;gap:20px;flex-wrap:wrap;">
     <div style="display:flex;align-items:center;gap:8px;">
         <div style="width:16px;height:16px;background:#dc2626;border-radius:50%;"></div>
-        <span style="color:#cbd5e1;font-size:13px;">Fraud Transaction (Star shape)</span>
+        <span style="color:#cbd5e1;font-size:13px;">Fraud Transaction (star shape)</span>
     </div>
     <div style="display:flex;align-items:center;gap:8px;">
         <div style="width:16px;height:16px;background:#059669;border-radius:50%;"></div>
-        <span style="color:#cbd5e1;font-size:13px;">Legitimate Transaction (Circle)</span>
+        <span style="color:#cbd5e1;font-size:13px;">Legitimate Transaction (circle)</span>
     </div>
     <div style="display:flex;align-items:center;gap:8px;">
         <div style="width:16px;height:16px;background:#185FA5;border-radius:4px;"></div>
-        <span style="color:#cbd5e1;font-size:13px;">FraudShield AI System (Hub)</span>
+        <span style="color:#cbd5e1;font-size:13px;">FraudShield System (hub)</span>
     </div>
     <div style="display:flex;align-items:center;gap:8px;">
         <div style="width:16px;height:3px;background:#f97316;"></div>
@@ -219,4 +208,4 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
-st.info("💡 Tip: Click and drag nodes to explore the graph. Hover over nodes for full transaction details. Larger nodes = higher fraud probability.")
+st.caption("Click and drag nodes to explore. Hover over nodes for full transaction details. Larger nodes = higher fraud probability.")
