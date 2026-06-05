@@ -37,6 +37,9 @@ st.markdown("""
 SENDGRID_API_KEY = st.secrets.get("SENDGRID_API_KEY") or os.getenv('SENDGRID_API_KEY')
 FROM_EMAIL = "varunsajinair@gmail.com"
 
+# DEBUG — remove after fixing
+st.info(f"Key loaded: {str(SENDGRID_API_KEY)[:15] if SENDGRID_API_KEY else 'NONE — key not found!'}")
+
 def send_fraud_alert(to_email, transaction_data):
     subject = f"FraudShield Alert: Suspicious Transaction — ${transaction_data['amount']:,.2f}"
 
@@ -109,9 +112,9 @@ def send_fraud_alert(to_email, transaction_data):
 def load_recent_fraud():
     try:
         conn = snowflake.connector.connect(
-            user=os.getenv('SNOWFLAKE_USER'),
-            password=os.getenv('SNOWFLAKE_PASSWORD'),
-            account=os.getenv('SNOWFLAKE_ACCOUNT', 'sxkobdu-fw40635'),
+            user=st.secrets.get("SNOWFLAKE_USER") or os.getenv('SNOWFLAKE_USER'),
+            password=st.secrets.get("SNOWFLAKE_PASSWORD") or os.getenv('SNOWFLAKE_PASSWORD'),
+            account=st.secrets.get("SNOWFLAKE_ACCOUNT") or os.getenv('SNOWFLAKE_ACCOUNT', 'sxkobdu-fw40635'),
             warehouse='COMPUTE_WH',
             database='FRAUDSHIELD',
             schema='FRAUD_DETECTION'
